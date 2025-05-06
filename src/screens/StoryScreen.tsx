@@ -93,7 +93,7 @@ export default function StoryScreen() {
   const handleChoice = async (nextId: string) => {
     if (storyContent.steps[nextId].choices.length === 0) {
       await clearStoryProgress();
-      navigation.navigate('End');
+      navigation.navigate('End', { finalMessage: storyContent.steps[nextId].text });
     } else {
       setCurrentStepId(nextId);
       await saveStoryProgress(nextId);
@@ -101,7 +101,7 @@ export default function StoryScreen() {
   };
 
   return (
-    <ScrollView style={tw`flex-1 bg-white p-4`}>
+    <View style={tw`flex-1 bg-white p-4 justify-center items-center`}>
       <Text style={tw`text-xl mb-6`}>{currentStep.text}</Text>
       
       <View style={tw`gap-4`}>
@@ -115,6 +115,6 @@ export default function StoryScreen() {
           </TouchableOpacity>
         ))}
       </View>
-    </ScrollView>
+    </View>
   );
 }
