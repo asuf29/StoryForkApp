@@ -8,7 +8,7 @@ import EndScreen from '../screens/EndScreen';
 
 export type RootStackParamList = {
   Home: undefined;
-  Story: undefined;
+  Story: { storyId: number };
   End: undefined;
 };
 

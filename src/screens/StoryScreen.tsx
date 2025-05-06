@@ -1,100 +1,120 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/RootNavigator';
+import { contents } from '../data/contents';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import tw from 'twrnc';
 
+type StoryScreenRouteProp = RouteProp<RootStackParamList, 'Story'>;
 type StoryScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Story'>;
 
-interface Section {
-  id: string;
+interface Choice {
   text: string;
-  choices: { text: string; nextId: string | null }[];
+  nextId: string;
 }
 
-const storyData: Record<string, Section> = {
-  start: {
-    id: 'start',
-    text: 'Bir sabah ormanda uyandın. İki yol var önünde.',
-    choices: [
-      { text: 'Sağdaki patikayı seç', nextId: 'path1' },
-      { text: 'Soldaki yolu takip et', nextId: 'path2' },
-    ],
-  },
-  path1: {
-    id: 'path1',
-    text: 'Sağdaki patikada garip bir ses duydun.',
-    choices: [
-      { text: 'Sesi takip et', nextId: 'end1' },
-      { text: 'Geri dön', nextId: 'start' },
-    ],
-  },
-  path2: {
-    id: 'path2',
-    text: 'Soldaki yol seni bir nehre götürdü.',
-    choices: [
-      { text: 'Nehri geç', nextId: 'end2' },
-      { text: 'Yolun kenarında otur', nextId: 'end3' },
-    ],
-  },
-  end1: {
-    id: 'end1',
-    text: 'Bir ayı buldun! Hikâye burada biter.',
-    choices: [],
-  },
-  end2: {
-    id: 'end2',
-    text: 'Nehri geçtin ve hazineyi buldun! 🎉',
-    choices: [],
-  },
-  end3: {
-    id: 'end3',
-    text: 'Manzarayı izlerken uyuyakaldın. 💤',
-    choices: [],
-  },
-};
+interface Step {
+  id: string;
+  text: string;
+  choices: Choice[];
+}
+
+interface StoryContent {
+  storyId: number;
+  steps: Record<string, Step>;
+}
+
+interface StoryProgress {
+  storyId: number;
+  currentStepId: string;
+}
+
+const typedContents = contents as StoryContent[];
 
 export default function StoryScreen() {
   const navigation = useNavigation<StoryScreenNavigationProp>();
-  const [currentSectionId, setCurrentSectionId] = useState('start');
-
-  const currentSection = storyData[currentSectionId];
+  const route = useRoute<StoryScreenRouteProp>();
+  const { storyId } = route.params;
+  const STORY_PROGRESS_KEY = `@story_progress-${storyId}`
+  
+  const storyContent = typedContents.find(content => content.storyId === storyId);
+  const [currentStepId, setCurrentStepId] = useState('start');
 
   useEffect(() => {
-    if (currentSection.choices.length === 0) {
-      const timer = setTimeout(() => {
-        navigation.navigate('End');
-      }, 1500); 
-      return () => clearTimeout(timer);
-    }
-  }, [currentSection]);
+    loadStoryProgress();
+  }, []);
 
-  const handleChoice = (nextId: string | null) => {
-    if (nextId) {
-      setCurrentSectionId(nextId);
-    } else {
+  const loadStoryProgress = async () => {
+    try {
+      const progressJson = await AsyncStorage.getItem(STORY_PROGRESS_KEY);
+      if (progressJson) {
+        const progress: StoryProgress = JSON.parse(progressJson);
+        if (progress.storyId === storyId) {
+          setCurrentStepId(progress.currentStepId);
+        }
+      }
+    } catch (error) {
+      console.error('Hikaye ilerlemesi yüklenirken hata:', error);
+    }
+  };
+
+  const saveStoryProgress = async (stepId: string) => {
+    try {
+      const progress: StoryProgress = {
+        storyId,
+        currentStepId: stepId
+      };
+      await AsyncStorage.setItem(STORY_PROGRESS_KEY, JSON.stringify(progress));
+    } catch (error) {
+      console.error('Hikaye ilerlemesi kaydedilirken hata:', error);
+    }
+  };
+
+  const clearStoryProgress = async () => {
+    try {
+      await AsyncStorage.removeItem(STORY_PROGRESS_KEY);
+    } catch (error) {
+      console.error('Hikaye ilerlemesi silinirken hata:', error);
+    }
+  };
+
+  if (!storyContent) {
+    return (
+      <View style={tw`flex-1 justify-center items-center`}>
+        <Text>Hikaye bulunamadı</Text>
+      </View>
+    );
+  }
+
+  const currentStep = storyContent.steps[currentStepId];
+
+  const handleChoice = async (nextId: string) => {
+    if (storyContent.steps[nextId].choices.length === 0) {
+      await clearStoryProgress();
       navigation.navigate('End');
+    } else {
+      setCurrentStepId(nextId);
+      await saveStoryProgress(nextId);
     }
   };
 
   return (
-    <ScrollView contentContainerStyle={tw`flex-grow justify-center px-6 py-8 bg-white`}>
-      <Text style={tw`text-xl font-semibold mb-6 text-center`}>{currentSection.text}</Text>
-
-      {currentSection.choices.length > 0 ? (
-        currentSection.choices.map((choice, index) => (
+    <ScrollView style={tw`flex-1 bg-white p-4`}>
+      <Text style={tw`text-xl mb-6`}>{currentStep.text}</Text>
+      
+      <View style={tw`gap-4`}>
+        {currentStep.choices.map((choice: Choice, index: number) => (
           <TouchableOpacity
             key={index}
-            style={tw`bg-indigo-600 py-3 px-4 rounded-lg mb-4`}
+            style={tw`bg-blue-500 p-4 rounded-lg`}
             onPress={() => handleChoice(choice.nextId)}
           >
             <Text style={tw`text-white text-center`}>{choice.text}</Text>
           </TouchableOpacity>
-        ))
-      ) : (
-        <Text style={tw`text-center text-gray-600 mt-4`}>Hikâye tamamlandı 🎉</Text>
-      )}
+        ))}
+      </View>
     </ScrollView>
   );
 }
