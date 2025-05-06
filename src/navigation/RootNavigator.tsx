@@ -9,7 +9,7 @@ import EndScreen from '../screens/EndScreen';
 export type RootStackParamList = {
   Home: undefined;
   Story: { storyId: number };
-  End: { finalMessage: string };
+  End: { finalMessage: string; image?: any };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();

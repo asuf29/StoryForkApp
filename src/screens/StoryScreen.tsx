@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, Image } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/RootNavigator';
@@ -19,6 +19,7 @@ interface Step {
   id: string;
   text: string;
   choices: Choice[];
+  image?: any;
 }
 
 interface StoryContent {
@@ -93,7 +94,7 @@ export default function StoryScreen() {
   const handleChoice = async (nextId: string) => {
     if (storyContent.steps[nextId].choices.length === 0) {
       await clearStoryProgress();
-      navigation.navigate('End', { finalMessage: storyContent.steps[nextId].text });
+      navigation.navigate('End', { finalMessage: storyContent.steps[nextId].text, image: storyContent.steps[nextId].image });
     } else {
       setCurrentStepId(nextId);
       await saveStoryProgress(nextId);
@@ -101,19 +102,33 @@ export default function StoryScreen() {
   };
 
   return (
-    <View style={tw`flex-1 bg-white p-4 justify-center items-center`}>
-      <Text style={tw`text-xl mb-6`}>{currentStep.text}</Text>
-      
-      <View style={tw`gap-4`}>
-        {currentStep.choices.map((choice: Choice, index: number) => (
-          <TouchableOpacity
-            key={index}
-            style={tw`bg-blue-500 p-4 rounded-lg`}
-            onPress={() => handleChoice(choice.nextId)}
-          >
-            <Text style={tw`text-white text-center`}>{choice.text}</Text>
-          </TouchableOpacity>
-        ))}
+    <View style={tw`flex-1 bg-gray-100`}>
+      {currentStep.image && (
+        <Image
+          style={tw`w-full h-80 rounded-b-3xl`}
+          source={currentStep.image}
+          resizeMode="cover"
+        />
+      )}
+
+      <View style={tw`flex-1 px-6 py-4 items-center`}>
+        <Text style={tw`text-2xl font-semibold text-gray-800 mb-4 text-center`}>
+          {currentStep.text}
+        </Text>
+
+        <View style={tw`w-full gap-4 mt-2`}>
+          {currentStep.choices.map((choice: Choice, index: number) => (
+            <TouchableOpacity
+              key={index}
+              style={tw`bg-blue-600 p-4 rounded-xl shadow-md`}
+              onPress={() => handleChoice(choice.nextId)}
+            >
+              <Text style={tw`text-white text-center text-base font-medium`}>
+                {choice.text}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
       </View>
     </View>
   );

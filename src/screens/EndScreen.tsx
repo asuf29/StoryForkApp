@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity, Image } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/RootNavigator';
@@ -11,10 +11,15 @@ type EndScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'En
 export default function EndScreen() {
   const navigation = useNavigation<EndScreenNavigationProp>();
   const route = useRoute<EndScreenRouteProp>();
-  const { finalMessage } = route.params;
+  const { finalMessage, image } = route.params;
 
   return (
-    <View style={tw`flex-1 bg-white p-4 justify-center items-center`}>
+    <View style={tw`flex-1 bg-white`}>
+      <Image
+          style={tw`w-full h-80 rounded-b-3xl`}
+          source={image}
+          resizeMode="cover"
+        />
       <Text style={tw`text-2xl font-bold mb-8 text-center`}>Hikaye Bitti! 🎉</Text>
       
       <View style={tw`bg-blue-50 p-6 rounded-lg mb-8`}>
