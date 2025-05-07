@@ -2,7 +2,10 @@
 Kullanıcının hikâyeleri okuyarak seçimler yaptığı, bu seçimlere göre farklı sonlara ulaştığı interaktif bir hikâye uygulaması.
 
 # 🎯 Proje Amacı <br/>
-Bu uygulamanın amacı, kullanıcıya seçimlere dayalı dallanan bir hikâye deneyimi sunmaktır. Her kullanıcı seçimi farklı bir hikâye yoluna yönlendirir ve uygulama kullanıcının ilerlemesini yerel olarak kaydeder.
+Bu uygulamanın amacı, kullanıcıya seçimlere dayalı dallanan bir hikâye deneyimi sunmaktır. Her kullanıcı seçimi farklı bir hikâye yoluna yönlendirir ve uygulama kullanıcının ilerlemesini yerel olarak kaydeder. 
+
+![storyfork](https://github.com/user-attachments/assets/2f150f39-5b78-4bdf-bd6d-f6b01a5e205d)
+<br/>
 
 # 🧠 Uygulama Özellikleri <br/>
 - 📚 Hikâye Listesi: Uygulama açıldığında kullanıcıyı hikâye listesi karşılar.
