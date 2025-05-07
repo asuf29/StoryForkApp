@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, Image, Animated } from 'react-native';
+import { View, Text, TouchableOpacity, Image, Animated, ScrollView } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/RootNavigator';
@@ -36,6 +36,12 @@ interface ChoiceStats {
   [key: string]: number;
 }
 
+interface TimelineStep {
+  id: string;
+  isCompleted: boolean;
+  isCurrent: boolean;
+}
+
 const typedContents = contents as StoryContent[];
 
 export default function StoryScreen() {
@@ -48,11 +54,15 @@ export default function StoryScreen() {
   const [currentStepId, setCurrentStepId] = useState('start');
   const [showStats, setShowStats] = useState(false);
   const [choiceStats, setChoiceStats] = useState<ChoiceStats>({});
+  const [timelineSteps, setTimelineSteps] = useState<TimelineStep[]>([]);
+  const [totalSteps, setTotalSteps] = useState(0);
+  const [completedSteps, setCompletedSteps] = useState(0);
   
   const progressAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     loadStoryProgress();
+    initializeTimeline();
   }, []);
 
   const loadStoryProgress = async () => {
@@ -62,6 +72,17 @@ export default function StoryScreen() {
         const progress: StoryProgress = JSON.parse(progressJson);
         if (progress.storyId === storyId) {
           setCurrentStepId(progress.currentStepId);
+          setTimelineSteps(prevSteps => 
+            prevSteps.map(step => ({
+              ...step,
+              isCompleted: step.id === progress.currentStepId || step.isCompleted,
+              isCurrent: step.id === progress.currentStepId
+            }))
+          );
+          const completedCount = timelineSteps.filter(step => 
+            step.isCompleted
+          ).length;
+          setCompletedSteps(completedCount);
         }
       }
     } catch (error) {
@@ -115,6 +136,35 @@ export default function StoryScreen() {
     }).start();
   };
 
+  const initializeTimeline = () => {
+    if (!storyContent) return;
+    
+    const steps = Object.entries(storyContent.steps)
+      .filter(([_, step]) => step.choices.length > 0)
+      .map(([stepId]) => ({
+        id: stepId,
+        isCompleted: false,
+        isCurrent: stepId === currentStepId
+      }));
+    
+    setTimelineSteps(steps);
+    setTotalSteps(steps.length);
+  };
+
+  const updateTimeline = (newStepId: string) => {
+    setTimelineSteps(prevSteps => 
+      prevSteps.map(step => ({
+        ...step,
+        isCompleted: step.id === currentStepId || step.isCompleted,
+        isCurrent: step.id === newStepId
+      }))
+    );
+    const completedCount = timelineSteps.filter(step => 
+      step.isCompleted
+    ).length;
+    setCompletedSteps(completedCount);
+  };
+
   const handleChoice = async (nextId: string) => {
     if (!storyContent) return;
 
@@ -130,12 +180,52 @@ export default function StoryScreen() {
           image: storyContent.steps[nextId].image 
         });
       } else {
+        updateTimeline(nextId);
         setCurrentStepId(nextId);
         setShowStats(false);
         saveStoryProgress(nextId);
       }
     }, 2000);
   };
+
+  const TimelineComponent = () => (
+    <View style={tw`px-4 py-2 bg-white rounded-lg shadow-sm mb-4`}>
+      <View style={tw`flex-row justify-between mb-2`}>
+        <Text style={tw`text-sm text-gray-600`}>
+          İlerleme: {completedSteps}/{totalSteps}
+        </Text>
+        <Text style={tw`text-sm text-gray-600`}>
+          {Math.round((completedSteps / totalSteps) * 100)}%
+        </Text>
+      </View>
+      
+      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+        <View style={tw`flex-row items-center`}>
+          {timelineSteps.map((step, index) => (
+            <React.Fragment key={step.id}>
+              <View style={tw`items-center`}>
+                <View style={[
+                  tw`w-4 h-4 rounded-full`,
+                  step.isCompleted ? tw`bg-green-500` : 
+                  step.isCurrent ? tw`bg-blue-500` : 
+                  tw`bg-gray-300`
+                ]} />
+                <Text style={tw`text-xs text-gray-500 mt-1`}>
+                  {index + 1}
+                </Text>
+              </View>
+              {index < timelineSteps.length - 1 && (
+                <View style={[
+                  tw`h-0.5 w-8`,
+                  step.isCompleted ? tw`bg-green-500` : tw`bg-gray-300`
+                ]} />
+              )}
+            </React.Fragment>
+          ))}
+        </View>
+      </ScrollView>
+    </View>
+  );
 
   if (!storyContent) {
     return (
@@ -157,7 +247,9 @@ export default function StoryScreen() {
         />
       )}
 
-      <View style={tw`flex-1 px-6 py-4 items-center`}>
+      <View style={tw`flex-1 px-6 py-4`}>
+        <TimelineComponent />
+        
         <Text style={tw`text-2xl font-semibold text-gray-800 mb-4 text-center`}>
           {currentStep.text}
         </Text>
