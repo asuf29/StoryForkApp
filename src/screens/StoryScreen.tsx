@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, Image } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, TouchableOpacity, Image, Animated } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/RootNavigator';
@@ -32,6 +32,10 @@ interface StoryProgress {
   currentStepId: string;
 }
 
+interface ChoiceStats {
+  [key: string]: number;
+}
+
 const typedContents = contents as StoryContent[];
 
 export default function StoryScreen() {
@@ -42,6 +46,10 @@ export default function StoryScreen() {
   
   const storyContent = typedContents.find(content => content.storyId === storyId);
   const [currentStepId, setCurrentStepId] = useState('start');
+  const [showStats, setShowStats] = useState(false);
+  const [choiceStats, setChoiceStats] = useState<ChoiceStats>({});
+  
+  const progressAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     loadStoryProgress();
@@ -81,6 +89,54 @@ export default function StoryScreen() {
     }
   };
 
+  const generateFakeStats = (choices: Choice[]) => {
+    const stats: ChoiceStats = {};
+    let remaining = 100;
+    
+    choices.forEach((choice, index) => {
+      if (index === choices.length - 1) {
+        stats[choice.nextId] = remaining;
+      } else {
+        const random = Math.floor(Math.random() * (remaining - 10)) + 10;
+        stats[choice.nextId] = random;
+        remaining -= random;
+      }
+    });
+    
+    return stats;
+  };
+
+  const animateProgress = () => {
+    progressAnim.setValue(0);
+    Animated.timing(progressAnim, {
+      toValue: 1,
+      duration: 1000,
+      useNativeDriver: false,
+    }).start();
+  };
+
+  const handleChoice = async (nextId: string) => {
+    if (!storyContent) return;
+
+    setShowStats(true);
+    setChoiceStats(generateFakeStats(currentStep.choices));
+    animateProgress();
+
+    setTimeout(async () => {
+      if (storyContent.steps[nextId].choices.length === 0) {
+        await clearStoryProgress();
+        navigation.navigate('End', { 
+          finalMessage: storyContent.steps[nextId].text,
+          image: storyContent.steps[nextId].image 
+        });
+      } else {
+        setCurrentStepId(nextId);
+        setShowStats(false);
+        saveStoryProgress(nextId);
+      }
+    }, 2000);
+  };
+
   if (!storyContent) {
     return (
       <View style={tw`flex-1 justify-center items-center`}>
@@ -90,16 +146,6 @@ export default function StoryScreen() {
   }
 
   const currentStep = storyContent.steps[currentStepId];
-
-  const handleChoice = async (nextId: string) => {
-    if (storyContent.steps[nextId].choices.length === 0) {
-      await clearStoryProgress();
-      navigation.navigate('End', { finalMessage: storyContent.steps[nextId].text, image: storyContent.steps[nextId].image });
-    } else {
-      setCurrentStepId(nextId);
-      await saveStoryProgress(nextId);
-    }
-  };
 
   return (
     <View style={tw`flex-1 bg-gray-100`}>
@@ -118,15 +164,35 @@ export default function StoryScreen() {
 
         <View style={tw`w-full gap-4 mt-2`}>
           {currentStep.choices.map((choice: Choice, index: number) => (
-            <TouchableOpacity
-              key={index}
-              style={tw`bg-blue-600 p-4 rounded-xl shadow-md`}
-              onPress={() => handleChoice(choice.nextId)}
-            >
-              <Text style={tw`text-white text-center text-base font-medium`}>
-                {choice.text}
-              </Text>
-            </TouchableOpacity>
+            <View key={index}>
+              <TouchableOpacity
+                style={tw`bg-blue-600 p-4 rounded-xl shadow-md`}
+                onPress={() => handleChoice(choice.nextId)}
+              >
+                <Text style={tw`text-white text-center text-base font-medium`}>
+                  {choice.text}
+                </Text>
+              </TouchableOpacity>
+              
+              {showStats && (
+                <View style={tw`mt-2`}>
+                  <Animated.View 
+                    style={[
+                      tw`h-2 bg-blue-200 rounded-full overflow-hidden`,
+                      {
+                        width: progressAnim.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: ['0%', `${choiceStats[choice.nextId]}%`]
+                        })
+                      }
+                    ]}
+                  />
+                  <Text style={tw`text-sm text-gray-600 mt-1`}>
+                    {choiceStats[choice.nextId]}% seçti
+                  </Text>
+                </View>
+              )}
+            </View>
           ))}
         </View>
       </View>

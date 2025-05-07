@@ -22,7 +22,6 @@ export default function HomeScreen() {
   const [hasProgress, setHasProgress] = useState(false);
   const [showModal, setShowModal] = useState(false);
   
-  // Animation values
   const modalScale = useRef(new Animated.Value(0)).current;
   const modalOpacity = useRef(new Animated.Value(0)).current;
 
