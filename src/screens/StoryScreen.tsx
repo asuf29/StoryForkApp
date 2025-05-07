@@ -74,14 +74,13 @@ export default function StoryScreen() {
         const progress: StoryProgress = JSON.parse(progressJson);
         if (progress.storyId === storyId) {
           setCurrentStepId(progress.currentStepId);
-          setTimelineSteps(prevSteps => 
-            prevSteps.map(step => ({
-              ...step,
-              isCompleted: step.id === progress.currentStepId || step.isCompleted,
-              isCurrent: step.id === progress.currentStepId
-            }))
-          );
-          const completedCount = timelineSteps.filter(step => 
+          const updatedSteps = timelineSteps.map(step => ({
+            ...step,
+            isCompleted: step.id === progress.currentStepId || step.isCompleted,
+            isCurrent: step.id === progress.currentStepId
+          }));
+          setTimelineSteps(updatedSteps);
+          const completedCount = updatedSteps.filter(step => 
             step.isCompleted
           ).length;
           setCompletedSteps(completedCount);
@@ -145,25 +144,25 @@ export default function StoryScreen() {
       .filter(([_, step]) => step.choices.length > 0)
       .map(([stepId]) => ({
         id: stepId,
-        isCompleted: false,
+        isCompleted: stepId === currentStepId,
         isCurrent: stepId === currentStepId
       }));
     
     setTimelineSteps(steps);
     setTotalSteps(steps.length);
+    const completedCount = steps.filter(step => step.isCompleted).length;
+    setCompletedSteps(completedCount);
   };
 
   const updateTimeline = (newStepId: string) => {
-    setTimelineSteps(prevSteps => 
-      prevSteps.map(step => ({
-        ...step,
-        isCompleted: step.id === currentStepId || step.isCompleted,
-        isCurrent: step.id === newStepId
-      }))
-    );
-    const completedCount = timelineSteps.filter(step => 
-      step.isCompleted
-    ).length;
+    const updatedSteps = timelineSteps.map(step => ({
+      ...step,
+      isCompleted: step.id === currentStepId || step.isCompleted,
+      isCurrent: step.id === newStepId
+    }));
+    
+    setTimelineSteps(updatedSteps);
+    const completedCount = updatedSteps.filter(step => step.isCompleted).length;
     setCompletedSteps(completedCount);
   };
 
@@ -201,8 +200,12 @@ export default function StoryScreen() {
         </Text>
       </View>
       
-      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-        <View style={tw`flex-row items-center`}>
+      <ScrollView 
+        horizontal 
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={tw`flex-1 justify-center`}
+      >
+        <View style={tw`flex-row items-center justify-center flex-1`}>
           {timelineSteps.map((step, index) => (
             <React.Fragment key={step.id}>
               <View style={tw`items-center`}>
@@ -262,7 +265,7 @@ export default function StoryScreen() {
                 style={[tw`p-4 rounded-xl shadow-md`, { backgroundColor: colors.primary }]}
                 onPress={() => handleChoice(choice.nextId)}
               >
-                <Text style={tw`text-white text-center text-base font-medium`}>
+                <Text style={tw`text-white text-center text-xl font-medium`}>
                   {choice.text}
                 </Text>
               </TouchableOpacity>

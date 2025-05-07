@@ -91,7 +91,7 @@ export default function HomeScreen() {
 
   return (
     <View style={[tw`flex-1 px-4 pt-12`, { backgroundColor: colors.background }]}>
-      <View style={tw`flex-row items-center justify-between mb-6 mt-6`}>
+      <View style={tw`flex-row items-center justify-between mt-6`}>
         <View style={tw`flex-row items-center`}>
           <Image
             source={require('../assets/images/user.png')} 
@@ -111,6 +111,13 @@ export default function HomeScreen() {
           </Text>
         </TouchableOpacity>
       </View>
+
+      <View style={tw`px-4 py-6`}>
+        <Text style={[tw`font-bold text-xl text-center`, { color: colors.text }]}>
+          Kitaplığın
+        </Text>
+      </View>
+
 
       <View style={tw`flex-row flex-wrap justify-between`}>
         {stories.map((story: Story) => (
@@ -168,8 +175,8 @@ export default function HomeScreen() {
               <Text style={[tw`text-xl`, { color: colors.textSecondary }]}>✖️</Text>
             </TouchableOpacity>
 
-            <Text style={[tw`text-xl font-bold mb-6 text-center`, { color: colors.text }]}>
-              {hasProgress ? 'Kaldığın Yerden Devam Et' : 'Hikayeye Başla'}
+            <Text style={[tw`text-xl font-bold mb-2 text-center`, { color: colors.text }]}>
+              {selectedStory?.title}
             </Text>
 
             {hasProgress && (
