@@ -6,6 +6,7 @@ import { RootStackParamList } from '../navigation/RootNavigator';
 import tw from 'twrnc';
 import { stories } from '../data/stories';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useTheme } from '../context/ThemeContext';
 
 interface Story {
   id: number;
@@ -24,6 +25,7 @@ export default function HomeScreen() {
   
   const modalScale = useRef(new Animated.Value(0)).current;
   const modalOpacity = useRef(new Animated.Value(0)).current;
+  const { colors, isDark, toggleTheme } = useTheme();
 
   useEffect(() => {
     if (showModal) {
@@ -88,22 +90,33 @@ export default function HomeScreen() {
   };
 
   return (
-    <View style={tw`flex-1 bg-white px-4 pt-12`}>
-      <View style={tw`flex-row items-center mb-6 mt-6`}>
-        <Image
-          source={require('../assets/images/user.png')} 
-          style={tw`w-12 h-12 rounded-full`}
-        />
-        <Text style={tw`text-xl font-bold text-gray-800 ml-2`}>
-          Merhaba, <Text style={tw`italic font-semibold`}>Asu</Text>! 👋
-        </Text>      
+    <View style={[tw`flex-1 px-4 pt-12`, { backgroundColor: colors.background }]}>
+      <View style={tw`flex-row items-center justify-between mb-6 mt-6`}>
+        <View style={tw`flex-row items-center`}>
+          <Image
+            source={require('../assets/images/user.png')} 
+            style={tw`w-12 h-12 rounded-full`}
+          />
+          <Text style={[tw`text-xl font-bold ml-2`, { color: colors.text }]}>
+            Merhaba, <Text style={tw`italic font-semibold`}>Asu</Text>! 👋
+          </Text>
+        </View>
+        
+        <TouchableOpacity
+          onPress={toggleTheme}
+          style={[tw`p-2 rounded-full`, { backgroundColor: colors.card }]}
+        >
+          <Text style={tw`text-2xl`}>
+            {isDark ? '🌞' : '🌙'}
+          </Text>
+        </TouchableOpacity>
       </View>
 
       <View style={tw`flex-row flex-wrap justify-between`}>
         {stories.map((story: Story) => (
           <TouchableOpacity
             key={story.id}
-            style={tw`bg-white rounded-2xl shadow-lg w-48 mb-4`}
+            style={[tw`rounded-2xl shadow-lg w-48 mb-4`, { backgroundColor: colors.card }]}
             onPress={() => handleStorySelect(story)}
           >
             <Image
@@ -113,8 +126,12 @@ export default function HomeScreen() {
             />
 
             <View style={tw`p-3`}>
-              <Text style={tw`text-xl font-semibold`}>{story.title}</Text>
-              <Text style={tw`text-gray-600 mt-2`}>{story.description}</Text>
+              <Text style={[tw`text-xl font-semibold`, { color: colors.text }]}>
+                {story.title}
+              </Text>
+              <Text style={[tw`mt-2`, { color: colors.textSecondary }]}>
+                {story.description}
+              </Text>
             </View>
           </TouchableOpacity>
         ))}
@@ -137,9 +154,10 @@ export default function HomeScreen() {
         >
           <Animated.View 
             style={[
-              tw`bg-white p-6 rounded-2xl w-80 shadow-xl relative`,
+              tw`p-6 rounded-2xl w-80 shadow-xl relative`,
               {
                 transform: [{ scale: modalScale }],
+                backgroundColor: colors.card
               }
             ]}
           >
@@ -147,16 +165,16 @@ export default function HomeScreen() {
               onPress={() => setShowModal(false)}
               style={tw`absolute top-2 right-2 z-10`}
             >
-              <Text style={tw`text-xl text-gray-400`}>✖️</Text>
+              <Text style={[tw`text-xl`, { color: colors.textSecondary }]}>✖️</Text>
             </TouchableOpacity>
 
-            <Text style={tw`text-xl font-bold mb-6 text-center`}>
+            <Text style={[tw`text-xl font-bold mb-6 text-center`, { color: colors.text }]}>
               {hasProgress ? 'Kaldığın Yerden Devam Et' : 'Hikayeye Başla'}
             </Text>
 
             {hasProgress && (
               <TouchableOpacity
-                style={tw`bg-blue-500 p-4 rounded-lg mb-3`}
+                style={[tw`p-4 rounded-lg mb-3`, { backgroundColor: colors.primary }]}
                 onPress={handleContinue}
               >
                 <Text style={tw`text-white text-center font-semibold`}>
@@ -166,7 +184,7 @@ export default function HomeScreen() {
             )}
 
             <TouchableOpacity
-              style={tw`bg-green-500 p-4 rounded-lg`}
+              style={[tw`p-4 rounded-lg`, { backgroundColor: colors.primary }]}
               onPress={handleStartNew}
             >
               <Text style={tw`text-white text-center font-semibold`}>

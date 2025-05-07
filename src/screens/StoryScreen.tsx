@@ -6,6 +6,7 @@ import { RootStackParamList } from '../navigation/RootNavigator';
 import { contents } from '../data/contents';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import tw from 'twrnc';
+import { useTheme } from '../context/ThemeContext';
 
 type StoryScreenRouteProp = RouteProp<RootStackParamList, 'Story'>;
 type StoryScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Story'>;
@@ -45,6 +46,7 @@ interface TimelineStep {
 const typedContents = contents as StoryContent[];
 
 export default function StoryScreen() {
+  const { colors } = useTheme();
   const navigation = useNavigation<StoryScreenNavigationProp>();
   const route = useRoute<StoryScreenRouteProp>();
   const { storyId } = route.params;
@@ -189,12 +191,12 @@ export default function StoryScreen() {
   };
 
   const TimelineComponent = () => (
-    <View style={tw`px-4 py-2 bg-white rounded-lg shadow-sm mb-4`}>
+    <View style={[tw`px-4 py-2 rounded-lg shadow-sm mb-4`, { backgroundColor: colors.card }]}>
       <View style={tw`flex-row justify-between mb-2`}>
-        <Text style={tw`text-sm text-gray-600`}>
+        <Text style={[tw`text-sm`, { color: colors.textSecondary }]}>
           İlerleme: {completedSteps}/{totalSteps}
         </Text>
-        <Text style={tw`text-sm text-gray-600`}>
+        <Text style={[tw`text-sm`, { color: colors.textSecondary }]}>
           {Math.round((completedSteps / totalSteps) * 100)}%
         </Text>
       </View>
@@ -206,18 +208,17 @@ export default function StoryScreen() {
               <View style={tw`items-center`}>
                 <View style={[
                   tw`w-4 h-4 rounded-full`,
-                  step.isCompleted ? tw`bg-green-500` : 
-                  step.isCurrent ? tw`bg-blue-500` : 
-                  tw`bg-gray-300`
+                  { backgroundColor: step.isCompleted ? colors.primary : 
+                    step.isCurrent ? colors.primary : colors.border }
                 ]} />
-                <Text style={tw`text-xs text-gray-500 mt-1`}>
+                <Text style={[tw`text-xs mt-1`, { color: colors.textSecondary }]}>
                   {index + 1}
                 </Text>
               </View>
               {index < timelineSteps.length - 1 && (
                 <View style={[
                   tw`h-0.5 w-8`,
-                  step.isCompleted ? tw`bg-green-500` : tw`bg-gray-300`
+                  { backgroundColor: step.isCompleted ? colors.primary : colors.border }
                 ]} />
               )}
             </React.Fragment>
@@ -229,8 +230,8 @@ export default function StoryScreen() {
 
   if (!storyContent) {
     return (
-      <View style={tw`flex-1 justify-center items-center`}>
-        <Text>Hikaye bulunamadı</Text>
+      <View style={[tw`flex-1 justify-center items-center`, { backgroundColor: colors.background }]}>
+        <Text style={{ color: colors.text }}>Hikaye bulunamadı</Text>
       </View>
     );
   }
@@ -238,7 +239,7 @@ export default function StoryScreen() {
   const currentStep = storyContent.steps[currentStepId];
 
   return (
-    <View style={tw`flex-1 bg-gray-100`}>
+    <View style={[tw`flex-1`, { backgroundColor: colors.background }]}>
       {currentStep.image && (
         <Image
           style={tw`w-full h-80 rounded-b-3xl`}
@@ -250,7 +251,7 @@ export default function StoryScreen() {
       <View style={tw`flex-1 px-6 py-4`}>
         <TimelineComponent />
         
-        <Text style={tw`text-2xl font-semibold text-gray-800 mb-4 text-center`}>
+        <Text style={[tw`text-2xl font-semibold mb-4 text-center`, { color: colors.text }]}>
           {currentStep.text}
         </Text>
 
@@ -258,7 +259,7 @@ export default function StoryScreen() {
           {currentStep.choices.map((choice: Choice, index: number) => (
             <View key={index}>
               <TouchableOpacity
-                style={tw`bg-blue-600 p-4 rounded-xl shadow-md`}
+                style={[tw`p-4 rounded-xl shadow-md`, { backgroundColor: colors.primary }]}
                 onPress={() => handleChoice(choice.nextId)}
               >
                 <Text style={tw`text-white text-center text-base font-medium`}>
@@ -270,7 +271,8 @@ export default function StoryScreen() {
                 <View style={tw`mt-2`}>
                   <Animated.View 
                     style={[
-                      tw`h-2 bg-blue-200 rounded-full overflow-hidden`,
+                      tw`h-2 rounded-full overflow-hidden`,
+                      { backgroundColor: colors.progress },
                       {
                         width: progressAnim.interpolate({
                           inputRange: [0, 1],
@@ -279,7 +281,7 @@ export default function StoryScreen() {
                       }
                     ]}
                   />
-                  <Text style={tw`text-sm text-gray-600 mt-1`}>
+                  <Text style={[tw`text-sm mt-1`, { color: colors.textSecondary }]}>
                     {choiceStats[choice.nextId]}% seçti
                   </Text>
                 </View>
